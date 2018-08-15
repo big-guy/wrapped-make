@@ -1,1 +1,1 @@
-rootProject.name = "wrapped-cmake"
+rootProject.name = "wrapped-make"

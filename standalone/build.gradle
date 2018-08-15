@@ -1,0 +1,51 @@
+// https://github.com/gradle/native-samples/blob/master/samples-dev/src/templates/build-wrapper-plugin/src/main/groovy/org/gradle/samples/plugins/WrappedNativeLibraryPlugin.groovy
+// does not work yet
+subprojects {
+    configurations {
+        implementation {}
+        cppCompile {
+            extendsFrom implementation
+            // attribute = C++ API
+        }
+        cppLink {
+            extendsFrom implementation
+            // attribute = Native link
+        }
+
+        install {
+            attributes {
+                attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage, "install"))
+            }
+            canBeResolved = true
+            canBeConsumed = false
+        }
+        installElements {
+            attributes {
+                attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage, 'install'))
+            }
+            canBeResolved = false
+            canBeConsumed = true
+        }
+    }
+
+    task build {
+        dependsOn configurations.install
+        headers.from(configurations.cppCompile)
+        libraries.from(configurations.cppLink)
+        ext.logFile = new File(temporaryDir, "log")
+        doLast {
+            logFile.text = "done"
+        }
+    }
+
+    artifacts {
+        installElements file: build.logFile, builtBy: build
+    }
+}
+
+project(":lib") {
+    def depProjects = [ ":transitive" ]
+    dependencies {
+        install depProjects.collect { project(it) }
+    }
+}
